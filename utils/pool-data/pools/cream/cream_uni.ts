@@ -18,7 +18,7 @@ import {
 
 const poolData: PoolData = {
   provider: 'Cream',
-  name: 'Uni Cream/Eth',
+  name: 'Uniswap Cream/Eth',
   added: '2020-08-23 20:31:52',
   links: [
     {
