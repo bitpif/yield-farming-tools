@@ -2,44 +2,61 @@ import {
   Badge,
   Box,
   Button,
+  ButtonProps,
   Collapse,
   Divider,
   Flex,
   Heading,
   IconButton,
   Link,
+  Menu,
+  MenuButton,
+  MenuButtonProps,
+  MenuDivider,
+  MenuItemOption,
+  MenuList,
+  MenuOptionGroup,
   SimpleGrid,
   Skeleton,
   Text,
   Tooltip,
 } from '@chakra-ui/core'
-import constate from 'constate'
 import { useEffect, useState } from 'react'
 import { Card } from '../components/Card'
 import { useEthContext } from '../contexts/ProviderContext'
-import { FilterOptions, RiskLevel, SortOrder } from '../types'
+import { RiskLevel } from '../types'
 import { pools } from '../utils/pool-data'
 import { toNumber } from '../utils/utils'
 
-const usePools = () => {
-  const [pools, setPools] = useState([])
-  const [filteredPools, setFilteredPools] = useState([])
-  return { pools, setPools, filteredPools, setFilteredPools }
+enum SortOrder {
+  Lowest,
+  Highest,
+  Newest,
+  Oldest,
+  Provider,
 }
-export const [PoolProvider, usePoolContext] = constate(usePools)
+
+enum Filters {
+  ShowLowApr,
+  ShowLowLiquidity,
+  OnlyMyPools,
+  OnlyMyRewards,
+}
+
+const TextMenuButton: React.FC<MenuButtonProps & ButtonProps> = ({
+  children,
+  ...props
+}) => <MenuButton {...props}>{children}</MenuButton>
 
 let poolData = []
 
-export const PoolSection: React.FC<{ prefetchedPools: any }> = ({
-  prefetchedPools,
-}) => {
+export const PoolSection: React.FC = () => {
   const { ethApp } = useEthContext()
   const [visiblePools, setVisiblePools] = useState([])
   const [sortOrder, setSortOrder] = useState(SortOrder.Highest)
   const [filters, setFilters] = useState([])
   const [showAll, setShowAll] = useState(false)
-  const { setPools, filteredPools } = usePoolContext()
-  console.log('pfp', prefetchedPools)
+
   const toggleVisibleItems = () => setShowAll(!showAll)
 
   const sortByApr = (a, b) => {
@@ -50,26 +67,28 @@ export const PoolSection: React.FC<{ prefetchedPools: any }> = ({
     }
   }
 
-  const updateVisiblePools = (pools: Array<any>) => {
+  const updateVisiblePools = () => {
+    let pools = poolData
+
     if (pools.length < 1) {
       return
     }
-    if (filters.includes(FilterOptions.OnlyMyPools)) {
+    if (filters.includes(Filters.OnlyMyPools)) {
       pools = pools.filter((item) => toNumber(item?.staking[1]?.value) > 0)
     }
 
-    if (filters.includes(FilterOptions.OnlyMyRewards)) {
+    if (filters.includes(Filters.OnlyMyRewards)) {
       pools = pools.filter(
         (item) =>
           item?.rewards?.length > 0 && toNumber(item?.rewards[0]?.value) > 0
       )
     }
 
-    if (!filters.includes(FilterOptions.ShowLowApr)) {
+    if (!filters.includes(Filters.ShowLowApr)) {
       pools = pools.filter((item) => toNumber(item?.apr) > 2)
     }
 
-    if (!filters.includes(FilterOptions.ShowLowLiquidity)) {
+    if (!filters.includes(Filters.ShowLowLiquidity)) {
       pools = pools.filter(
         (item) =>
           !item?.staking[0]?.value || toNumber(item?.staking[0]?.value) > 200000
@@ -88,9 +107,7 @@ export const PoolSection: React.FC<{ prefetchedPools: any }> = ({
   }
 
   const getPoolInfo = async () => {
-    console.log(ethApp, 'eth')
     if (ethApp) {
-      console.log('pools', pools)
       const fetchedPools = []
       await Promise.all(
         Object.values(pools).map(
@@ -98,7 +115,6 @@ export const PoolSection: React.FC<{ prefetchedPools: any }> = ({
             new Promise((resolve, reject) => {
               ;(getPoolData(ethApp) as any)
                 .then((data) => {
-                  console.log(data)
                   fetchedPools.push(data)
                   resolve()
                 })
@@ -109,26 +125,18 @@ export const PoolSection: React.FC<{ prefetchedPools: any }> = ({
             })
         )
       )
-      console.log('fp', fetchedPools)
       poolData = fetchedPools
-      setPools(poolData)
-      updateVisiblePools(poolData)
+      updateVisiblePools()
     }
   }
 
   useEffect(() => {
-    console.log('gpi')
     getPoolInfo()
   }, [ethApp])
 
   useEffect(() => {
-    updateVisiblePools(poolData)
+    updateVisiblePools()
   }, [sortOrder, filters])
-
-  useEffect(() => {
-    setPools(prefetchedPools)
-    updateVisiblePools(prefetchedPools)
-  }, [prefetchedPools])
 
   return (
     <Box pt={4}>
@@ -152,13 +160,74 @@ export const PoolSection: React.FC<{ prefetchedPools: any }> = ({
           <Text w="25%" color="gray.600" fontWeight="bold">
             APR
           </Text>
+          <Menu closeOnSelect={false}>
+            <TextMenuButton
+              as={Button}
+              variant="unstyled"
+              maxH="24px"
+              rightIcon="chevron-down"
+              color="gray.600"
+              fontWeight="bold"
+              mr={11}
+              isDisabled={visiblePools.length < 1}
+            >
+              <Box d={{ xs: 'none', md: 'inline' }}>Filter</Box>
+            </TextMenuButton>
+            <MenuList>
+              <MenuOptionGroup
+                value={sortOrder}
+                defaultValue={SortOrder.Highest}
+                onChange={(value) => setSortOrder(value)}
+                title="Sort"
+                type="radio"
+              >
+                <MenuItemOption value={SortOrder.Highest}>
+                  Highest APR
+                </MenuItemOption>
+                <MenuItemOption value={SortOrder.Lowest}>
+                  Lowest APR
+                </MenuItemOption>
+                {/* <MenuItemOption value={SortOrder.Newest}>
+                  Newest First
+                </MenuItemOption>
+                <MenuItemOption value={SortOrder.Oldest}>
+                  Oldest First
+                </MenuItemOption> */}
+                <MenuItemOption value={SortOrder.Provider}>
+                  By Provider
+                </MenuItemOption>
+              </MenuOptionGroup>
+              <MenuDivider />
+              <MenuOptionGroup
+                onChange={(value) => setFilters(value)}
+                value={filters}
+                title="Filters"
+                type="checkbox"
+              >
+                <MenuItemOption value={Filters.OnlyMyPools}>
+                  Only show pools I'm in
+                </MenuItemOption>
+                <MenuItemOption value={Filters.OnlyMyRewards}>
+                  Only show pools I have rewards in
+                </MenuItemOption>
+                <MenuItemOption value={Filters.ShowLowApr}>
+                  Show pools with low APR
+                </MenuItemOption>
+                <MenuItemOption value={Filters.ShowLowLiquidity}>
+                  Show pools with low liquidity
+                </MenuItemOption>
+              </MenuOptionGroup>
+            </MenuList>
+          </Menu>
         </Flex>
         <Box mx="1rem">
           {visiblePools.length > 0 ? (
             <Flex direction="column" justifyContent="center">
-              {visiblePools.map((poolItemData, index) => (
-                <PoolItem key={index} poolItemData={poolItemData} />
-              ))}
+              <Collapse startingHeight={620} isOpen={showAll}>
+                {visiblePools.map((poolItemData, index) => (
+                  <PoolItem key={index} poolItemData={poolItemData} />
+                ))}
+              </Collapse>
               <Button
                 mt={showAll ? 0 : 2}
                 size="sm"
@@ -170,7 +239,7 @@ export const PoolSection: React.FC<{ prefetchedPools: any }> = ({
               </Button>
             </Flex>
           ) : (
-            !filters.includes(FilterOptions.OnlyMyPools) && (
+            !filters.includes(Filters.OnlyMyPools) && (
               <Box>
                 {[...Array(7)].map((_e, i) => (
                   <Skeleton height={72} my={4} width="100%" key={i} />
