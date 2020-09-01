@@ -1,10 +1,10 @@
 import {
   Badge,
   Box,
+  Button,
   Collapse,
   Divider,
   Flex,
-  Grid,
   Heading,
   IconButton,
   Link,
@@ -37,8 +37,10 @@ export const PoolSection: React.FC<{ prefetchedPools: any }> = ({
   const [visiblePools, setVisiblePools] = useState([])
   const [sortOrder, setSortOrder] = useState(SortOrder.Highest)
   const [filters, setFilters] = useState([])
+  const [showAll, setShowAll] = useState(false)
   const { setPools, filteredPools } = usePoolContext()
   console.log('pfp', prefetchedPools)
+  const toggleVisibleItems = () => setShowAll(!showAll)
 
   const sortByApr = (a, b) => {
     if (sortOrder === SortOrder.Highest) {
@@ -114,10 +116,10 @@ export const PoolSection: React.FC<{ prefetchedPools: any }> = ({
     }
   }
 
-  // useEffect(() => {
-  //   console.log('gpi')
-  //   getPoolInfo()
-  // }, [ethApp])
+  useEffect(() => {
+    console.log('gpi')
+    getPoolInfo()
+  }, [ethApp])
 
   useEffect(() => {
     updateVisiblePools(poolData)
@@ -131,51 +133,26 @@ export const PoolSection: React.FC<{ prefetchedPools: any }> = ({
   return (
     <Box pt={4}>
       <Box>
-        <Grid
-          templateColumns="1fr 2fr 1.4fr 1fr 0.2fr"
-          marginX="2rem"
-          marginBottom="0.3rem"
-        >
+        <Flex justifyContent="space-between" mx="1rem">
           <Text
-            d={{ xs: 'none', md: 'flex' }}
+            w="25%"
+            d={{ xs: 'none', md: 'block' }}
             color="gray.600"
             fontWeight="bold"
-            alignItems="center"
+            ml="16px"
           >
             Provider
           </Text>
-          <Text
-            color="gray.600"
-            fontWeight="bold"
-            display="flex"
-            alignItems="center"
-          >
+          <Text ml="8px" w="25%" color="gray.600" fontWeight="bold">
             Pool
           </Text>
-          <Text
-            color="gray.600"
-            fontWeight="bold"
-            display="flex"
-            alignItems="center"
-          >
+          <Text w="25%" color="gray.600" fontWeight="bold">
             Rewards
           </Text>
-          <Text
-            color="gray.600"
-            fontWeight="bold"
-            display="flex"
-            alignItems="center"
-          >
+          <Text w="25%" color="gray.600" fontWeight="bold">
             APR
           </Text>
-          <IconButton
-            aria-label="refresh"
-            icon="repeat"
-            variant="ghost"
-            justifySelf="end"
-            isRound={true}
-          />
-        </Grid>
+        </Flex>
         <Box mx="1rem">
           <Flex direction="column" justifyContent="center">
             {visiblePools.map((poolItemData, index) => (
@@ -193,26 +170,25 @@ const PoolItem = ({ poolItemData }) => {
   const [show, setShow] = useState(false)
 
   return (
-    <Card boxShadow="sm" mx={0} mt={0}>
-      <Grid
-        templateColumns="1fr 2fr 1.4fr 1fr 0.2fr"
+    <Card boxShadow="sm" mx={0}>
+      <Flex
+        justifyContent="space-between"
+        alignItems="center"
         onClick={() => setShow(!show)}
         cursor="pointer"
       >
-        <Text d={{ xs: 'none', md: 'flex' }} alignItems="center">
+        <Text d={{ xs: 'none', md: 'block' }} w="25%">
           {provider}
         </Text>
-        <Text display="flex" alignItems="center">
-          {name}
-        </Text>
-        <Box display="flex" alignItems="center">
+        <Text w="25%">{name}</Text>
+        <Box w="25%">
           {poolRewards.map((reward) => (
             <Badge mx={1} key={reward}>
               {reward}
             </Badge>
           ))}
         </Box>
-        <Text display="flex" alignItems="center">
+        <Text w="25%">
           {poolItemData.apr ? (
             `${poolItemData.apr}%`
           ) : (
@@ -221,18 +197,18 @@ const PoolItem = ({ poolItemData }) => {
         </Text>
         <IconButton
           backgroundColor="white"
-          justifySelf="end"
-          variant="ghost"
           fontSize={20}
           onClick={() => setShow(!show)}
           isRound={true}
           aria-label="Show more"
           icon={show ? 'chevron-up' : 'chevron-down'}
-        />
-      </Grid>
+        >
+          More Info
+        </IconButton>
+      </Flex>
       <Collapse mt={4} isOpen={show}>
         <Divider mb={4} />
-        <SimpleGrid minChildWidth="212px" spacing={4} cursor="auto">
+        <SimpleGrid minChildWidth="212px" spacing={4}>
           <LinkList links={poolItemData.links || []} />
           <DetailItem title="Prices" data={poolItemData.prices} />
           <DetailItem title="ROI" data={poolItemData.ROIs} />
