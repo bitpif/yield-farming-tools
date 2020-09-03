@@ -1,6 +1,6 @@
 import { ERC20_ABI, MASTER_CHEF_ABI } from '../../../data/constants'
 import { PoolData, RiskLevel, TokenData } from '../../../types'
-import { getSushiPoolData } from '../pool-templates/sushi-based'
+import { getSushiPoolData } from '../../pool-templates/sushi-based'
 import {
   AMPL_TOKEN,
   BAND_TOKEN,
@@ -23,7 +23,7 @@ const poolData: PoolData = {
   name: 'Uni',
   added: '2020-08-28 22:50:58',
   risk: {
-    smartContract: RiskLevel.HIGH,
+    smartContract: RiskLevel.LOW,
     impermanentLoss: RiskLevel.HIGH,
   },
   links: [
