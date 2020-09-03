@@ -46,7 +46,7 @@ export const pools = {
   susd,
   yfii_dai,
   yfii_ycrv,
-  // yusd_usdc,
+  yusd_usdc,
   yffi,
   yffi_ycrv,
   yffi_dai,
